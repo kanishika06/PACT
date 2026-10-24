@@ -117,10 +117,10 @@ export default function AiTaskModal({
 
       {suggestions.length > 0 && (
         <>
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             {/* Report the real provenance — never dress fallback up as AI. */}
             <span
-              className={`mono-micro rounded-full border px-3 py-1 ${
+              className={`mono-micro shrink-0 whitespace-nowrap rounded-full border px-3 py-1 ${
                 source === "gemini"
                   ? "border-[rgba(45,212,212,0.5)] text-[var(--cyan)]"
                   : "border-[rgba(234,242,248,0.25)] text-[var(--muted)]"
