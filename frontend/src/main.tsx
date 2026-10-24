@@ -10,6 +10,8 @@ import RouteFallback from "./components/RouteFallback";
 import "./index.css";
 
 const Landing = lazy(() => import("./routes/Landing"));
+const Auth = lazy(() => import("./routes/Auth"));
+const Story = lazy(() => import("./routes/Story"));
 const Login = lazy(() => import("./routes/Login"));
 const Dashboard = lazy(() => import("./routes/Dashboard"));
 const ProjectRoute = lazy(() => import("./routes/Project"));
@@ -34,6 +36,10 @@ createRoot(document.getElementById("root")!).render(
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<Landing />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/story" element={<Story />} />
+                {/* Kept: binds the session to a seeded backend user, which is
+                    what supplies owner_id / assignee_id. */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects/:projectId" element={<ProjectRoute />} />

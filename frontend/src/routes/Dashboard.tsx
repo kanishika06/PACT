@@ -17,9 +17,9 @@ export default function Dashboard() {
   const projects = useProjects();
   const [creating, setCreating] = useState(false);
 
-  // No identity means the user deep-linked here; send them to pick one.
+  // No identity means the user deep-linked here or has no demo access yet.
   useEffect(() => {
-    if (!identity) navigate("/login", { replace: true });
+    if (!identity) navigate("/auth", { replace: true });
   }, [identity, navigate]);
 
   if (!identity) return null;

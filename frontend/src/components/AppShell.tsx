@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 import { Mono } from "./primitives";
 import { clearIdentity, getIdentity } from "../lib/identity";
+import { clearAccess } from "../lib/session";
 import { useDbHealth } from "../lib/queries";
 
 /** Aperture mark from reference 2 — concentric ring with a cyan/violet glow. */
@@ -99,9 +100,10 @@ export default function AppShell({
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               clearIdentity();
-              navigate("/login");
+              clearAccess();
+              navigate("/auth");
             }}
-            title="Switch identity"
+            title="Sign out of demo access"
             className="notched-sm flex h-11 w-11 items-center justify-center border border-[rgba(124,58,237,0.4)] bg-[var(--raised)] transition-colors hover:border-[var(--cyan)]"
           >
             <div className="flex flex-col items-end gap-1">

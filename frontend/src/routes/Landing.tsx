@@ -17,7 +17,7 @@ export default function Landing() {
     event.preventDefault();
     if (!name.trim()) return;
     setVisitorName(name);
-    navigate("/login");
+    navigate("/auth");
   }
 
   return (

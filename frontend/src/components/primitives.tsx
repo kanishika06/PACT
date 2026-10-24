@@ -5,11 +5,20 @@ import { motion } from "framer-motion";
 export function Mono({
   children,
   className = "",
+  id,
+  role,
 }: {
   children: ReactNode;
   className?: string;
+  /** Set when this text is the target of aria-describedby. */
+  id?: string;
+  role?: string;
 }) {
-  return <span className={`mono-micro ${className}`}>{children}</span>;
+  return (
+    <span id={id} role={role} className={`mono-micro ${className}`}>
+      {children}
+    </span>
+  );
 }
 
 /** The pill badge from reference 2 ("BEGIN YOUR JOURNEY"). */
