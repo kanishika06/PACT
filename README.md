@@ -39,8 +39,9 @@ copy .env.example .env
 | Key | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Supabase PostgreSQL connection string. If unset, the app falls back to a local SQLite file (`teamsync.db`) so you can develop without credentials. |
-| `GEMINI_API_KEY` | Used only by `backend/services/ai_task_service.py` (Member 3). |
-| `FRONTEND_ORIGIN` | Comma-separated allowed CORS origins. Defaults to the Vite dev server. |
+| `GEMINI_API_KEY` | Used only by `backend/services/ai_task_service.py` (Member 3). If omitted, deterministic fallback mode is used. |
+| `GEMINI_MODEL` | Optional Gemini model name (defaults to `gemini-2.5-flash`). |
+| `FRONTEND_ORIGIN` | Comma-separated allowed CORS origins. Defaults to `http://localhost:5173,http://127.0.0.1:5173`. |
 
 `DATABASE_URL` is normalized automatically: a Supabase-style
 `postgresql://...` or `postgres://...` URL is rewritten to
@@ -265,9 +266,10 @@ backend/
 │   ├── dashboard.py
 │   └── ai.py          Integration layer for the AI service
 ├── services/
-│   └── ai_task_service.py   Owned by Member 3
+│   └── ai_task_service.py   Owned by Member 3 (Gemini SDK & deterministic fallback)
 └── tests/
-    └── test_api.py
+    ├── test_api.py          Owned by Member 2 (Backend API routes)
+    └── test_ai_task_service.py Owned by Member 3 (AI service & fallback tests)
 
 database/
 └── schema.sql         PostgreSQL schema reference, owned by Member 3
@@ -276,26 +278,40 @@ database/
 ### Ownership
 
 - **Member 2 (backend):** `main.py`, `config.py`, `database.py`, `models.py`,
-  `schemas.py`, `crud.py`, all of `routes/`, `seed.py`, `tests/`.
-- **Member 3 (AI):** `backend/services/ai_task_service.py` and
-  `database/schema.sql`.
+  `schemas.py`, `crud.py`, all of `routes/`, `seed.py`, `tests/test_api.py`.
+- **Member 3 (AI & DB):** `backend/services/ai_task_service.py`,
+  `database/schema.sql`, and `backend/tests/test_ai_task_service.py`.
 
-`backend/services/ai_task_service.py` is currently a **placeholder** that
-returns a deterministic plan labelled `"fallback"`. Member 3 replaces the whole
-module with the Gemini implementation, keeping this signature:
+`backend/services/ai_task_service.py` implements the complete Gemini integration
+via the official `google-genai` SDK along with a deterministic fallback for zero-dependency
+reliability. It adheres strictly to the contract:
 
 ```python
-generate_tasks(project_title: str, project_description: str, team_size: int) -> dict
+generate_tasks(project_title: str, project_description: str, team_size: int = 3) -> dict
 ```
 
-returning `{"tasks": [...], "source": "gemini" | "fallback"}`. The backend
-validates that shape before it reaches the frontend, so a mismatch surfaces as
-a 502 rather than corrupt data.
+returning:
 
-`database/schema.sql` was generated from `backend/models.py` as a starting
-point. The two must stay in sync — table names, column names, types,
-nullability, defaults and the status/priority value sets. Coordinate before
-changing either.
+```json
+{
+  "tasks": [
+    {
+      "title": "string",
+      "description": "string",
+      "priority": "Low" | "Medium" | "High",
+      "estimated_days": 2
+    }
+  ],
+  "source": "gemini" | "fallback"
+}
+```
+
+The backend validates that shape before it reaches the frontend, ensuring data integrity.
+Input validation strictly checks non-empty titles, descriptions, and integer team sizes (1-20).
+
+`database/schema.sql` provides the canonical PostgreSQL/Supabase schema reference
+synchronized with `backend/models.py`. Both maintain identical table names, column
+names, types, nullability, defaults, UUID primary keys, and cascade rules.
 
 ---
 
@@ -313,15 +329,19 @@ changing either.
 - Faculty dashboard, real-time chat and push notifications are out of scope.
 
 ### Environment notes
-
-- **SQLite fallback:** with no `DATABASE_URL`, the app uses a local
+ 
+- **SQLite fallback (Verified):** with no `DATABASE_URL`, the app uses a local
   `teamsync.db`. UUID columns are stored as `CHAR(36)` there and as native
   `uuid` on PostgreSQL; `skills` is `JSON` on SQLite and `JSONB` on PostgreSQL.
   Timestamps come back without a UTC offset on SQLite and with one on
-  PostgreSQL.
-- **Supabase connectivity is unverified.** No credentials were available during
-  development, so everything was tested against SQLite. The PostgreSQL path
-  still needs a real `DATABASE_URL` and a run of `/health/db` to confirm.
+  PostgreSQL. Full CRUD, demo seeding, and persistence were verified against SQLite.
+- **Supabase connectivity (Unverified — credentials pending):** No credentials were
+  provided in the environment, so live Supabase connectivity is unverified. The
+  `psycopg[binary]` (v3) driver and URL normalization logic are verified. Once
+  a real `DATABASE_URL` is set, test `/health/db` to verify live connection.
+- **Gemini API status (Mock-tested & Fallback Verified):** Fallback mode and mock
+  parsing tests pass 100%. Live Gemini API calls require setting `GEMINI_API_KEY`
+  in `.env`.
 - **Windows Application Control:** on this machine the policy blocked
   SQLAlchemy's compiled Cython `.pyd` modules inside the virtualenv. They were
   removed so SQLAlchemy uses its supported pure-Python implementations. If you
