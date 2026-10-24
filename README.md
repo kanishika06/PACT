@@ -6,9 +6,14 @@ A student project and team collaboration portal. Students create projects,
 manage teams, assign tasks, track deadlines, store resource links, and use AI
 to generate suggested project tasks.
 
-This repository currently contains the **backend** (FastAPI + SQLAlchemy +
-PostgreSQL). The React frontend lives separately and consumes the REST API
-documented below.
+This repository contains both halves:
+
+- **`backend/`** — FastAPI + SQLAlchemy + PostgreSQL. Setup and the full API
+  reference are below.
+- **`frontend/`** — React + TypeScript + Vite client, built to
+  [FRONTEND_PLAN.md](FRONTEND_PLAN.md). See [frontend/README.md](frontend/README.md).
+
+Run the backend first, then the frontend on `http://localhost:5173`.
 
 ---
 
